@@ -70,10 +70,10 @@ public class MultiServer {
         private GraphHolder graphHolder;
 
         public ClientHandler(Socket socket, GraphHolder graphHolder) {
+            session = new Session();
             this.clientSocket = socket;
             this.graphHolder = graphHolder;
             timeLimiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
-            session = new Session();
             LOG.debug("Session established with UUID " + session.getUuid());
         }
 

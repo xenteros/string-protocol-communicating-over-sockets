@@ -2,16 +2,20 @@ package com.github.xenteros.graph;
 
 import com.github.xenteros.exception.VertexNotAllowedException;
 import com.github.xenteros.exception.VertexNotFoundException;
+import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
+import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.DirectedWeightedPseudograph;
+
+import java.util.stream.Collectors;
 
 public class GraphHolder {
 
-    private DirectedWeightedMultigraph<String, DefaultWeightedEdge> graph;
+    private DirectedWeightedPseudograph<String, DefaultWeightedEdge> graph;
 
     public GraphHolder() {
-        graph = new DirectedWeightedMultigraph<>(DefaultWeightedEdge.class);
+        graph = new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
     }
 
     public void addNode(String node) {
@@ -57,6 +61,22 @@ public class GraphHolder {
 
             double result = new DijkstraShortestPath<>(graph).getPathWeight(from, to);
             return result < Integer.MAX_VALUE ? (int)result : Integer.MAX_VALUE;    //this cast is safe
+        }
+    }
+
+    public String findNodesCloserThan(int weight, final String node) {
+        synchronized (graph) {
+            if (!graph.containsVertex(node)) {
+                throw new VertexNotFoundException();
+            }
+            BellmanFordShortestPath<String, DefaultWeightedEdge> bellmanFord = new BellmanFordShortestPath<>(graph);
+            ShortestPathAlgorithm.SingleSourcePaths<String, DefaultWeightedEdge> paths = bellmanFord.getPaths(node);
+            return graph.vertexSet().stream()
+                    .filter(v -> paths.getWeight(v) < weight)
+                    .filter(v -> !v.equals(node))
+                    .sorted()
+                    .collect(Collectors.joining(","));
+
         }
     }
 
