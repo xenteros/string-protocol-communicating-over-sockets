@@ -12,5 +12,6 @@ public class ServerMessages {
     public static final String NODE_NOT_FOUND = "ERROR: NODE NOT FOUND";
     public static final String NODE_REMOVED = "NODE REMOVED";
     public static final String EDGE_REMOVED = "EDGE REMOVED";
+    public static final String PATH_WEIGHT = "%d";
 
 }
