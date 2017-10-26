@@ -20,7 +20,7 @@ public class ServerMessageHandler {
 
     public static String handle(String message, Session session, GraphHolder graphHolder) {
         String response = prepareResponse(message, session, graphHolder);
-        LOG.debug(format("Respond with %s to %s.", message, response));
+        LOG.debug(format("Respond to %s with %s.", message, response));
         return response;
     }
 
@@ -80,6 +80,16 @@ public class ServerMessageHandler {
             try {
                 String[] path = message.substring(SHORTEST_PATH.length()).split(" ");
                 return format(ServerMessages.PATH_WEIGHT, graphHolder.shortestPath(path[0], path[1]));
+            } catch (VertexNotFoundException e) {
+                return NODE_NOT_FOUND;
+            } catch (IndexOutOfBoundsException e) {
+                return UNSUPPORTED;
+            }
+        }
+        if (message.startsWith(CLOSER_THAN)) {
+            try {
+                String[] params = message.substring(CLOSER_THAN.length()).split(" ");
+                return graphHolder.findNodesCloserThan(Integer.parseInt(params[0]), params[1]);
             } catch (VertexNotFoundException e) {
                 return NODE_NOT_FOUND;
             } catch (IndexOutOfBoundsException e) {

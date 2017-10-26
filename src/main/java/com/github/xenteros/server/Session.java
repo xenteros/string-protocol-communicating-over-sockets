@@ -9,8 +9,8 @@ public class Session {
     private Long startTime;
 
     public Session() {
-        uuid = UUID.randomUUID();
         startTime = System.currentTimeMillis();
+        uuid = UUID.randomUUID();
         name = "Anonymous";
     }
 
