@@ -1,5 +1,6 @@
 package com.github.xenteros.server;
 
+import com.github.xenteros.graph.GraphHolder;
 import com.github.xenteros.handler.ServerMessages;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.TimeLimiter;
@@ -26,14 +27,16 @@ public class MultiServer {
     private static final Logger LOG = LoggerFactory.getLogger(MultiServer.class);
 
     private ServerSocket serverSocket;
+    private GraphHolder graphHolder;
 
 
     public void start(int port) {
         try {
+            graphHolder = new GraphHolder();
             serverSocket = new ServerSocket(port);
             LOG.info("Server started at port " + port);
             while (true) {
-                new ClientHandler(serverSocket.accept()).run();
+                new ClientHandler(serverSocket.accept(), graphHolder).run();
                 LOG.info("Client connected to the server.");
             }
 
@@ -64,9 +67,11 @@ public class MultiServer {
         private BufferedReader in;
         private TimeLimiter timeLimiter;
         private Session session;
+        private GraphHolder graphHolder;
 
-        public ClientHandler(Socket socket) {
+        public ClientHandler(Socket socket, GraphHolder graphHolder) {
             this.clientSocket = socket;
+            this.graphHolder = graphHolder;
             timeLimiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
             session = new Session();
             LOG.debug("Session established with UUID " + session.getUuid());
@@ -82,7 +87,7 @@ public class MultiServer {
                     while (true) {
                         inputLine = timeLimiter.callWithTimeout(in::readLine, 30, TimeUnit.SECONDS);
                         LOG.info(inputLine);
-                        String response = handle(inputLine, session);
+                        String response = handle(inputLine, session, graphHolder);
                         out.println(response);
                         if (BYE.equals(inputLine)) {
                             break;
