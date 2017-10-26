@@ -1,6 +1,5 @@
 package com.github.xenteros.handler;
 
-import com.github.xenteros.exception.EdgeNotAllowedException;
 import com.github.xenteros.exception.EdgeNotFoundException;
 import com.github.xenteros.exception.VertexNotAllowedException;
 import com.github.xenteros.exception.VertexNotFoundException;
@@ -10,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.github.xenteros.handler.ClientMessages.*;
+import static com.github.xenteros.handler.ClientMessages.BYE;
+import static com.github.xenteros.handler.ClientMessages.HI;
+import static com.github.xenteros.handler.ServerMessages.*;
 import static java.lang.String.format;
 
 public class ServerMessageHandler {
@@ -25,7 +27,7 @@ public class ServerMessageHandler {
     private static String prepareResponse(String message, Session session, GraphHolder graphHolder) {
 
         if (message == null) {
-            return ServerMessages.UNSUPPORTED;
+            return UNSUPPORTED;
         }
         if (message.startsWith(HI)) {
             String name = message.substring(HI.length());
@@ -48,10 +50,10 @@ public class ServerMessageHandler {
             String[] edge = message.substring(ADD_EDGE.length()).split(" ");
             try {
                 graphHolder.addEdge(edge[0], edge[1], Integer.parseInt(edge[2]));
-            } catch (EdgeNotAllowedException e) {
-                return ServerMessages.NODE_NOT_FOUND;
+            } catch (VertexNotFoundException e) {
+                return NODE_NOT_FOUND;
             } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                return ServerMessages.UNSUPPORTED;
+                return UNSUPPORTED;
             }
             return ServerMessages.EDGE_ADDED;
         }
@@ -59,7 +61,7 @@ public class ServerMessageHandler {
             try {
                 graphHolder.removeNode(message.substring(REMOVE_NODE.length()));
             } catch (VertexNotFoundException e) {
-                return ServerMessages.NODE_NOT_FOUND;
+                return NODE_NOT_FOUND;
             }
             return ServerMessages.NODE_REMOVED;
         }
@@ -68,12 +70,22 @@ public class ServerMessageHandler {
                 String[] edge = message.substring(REMOVE_EDGE.length()).split(" ");
                 graphHolder.removeEdge(edge[0], edge[1]);
             } catch (VertexNotFoundException | EdgeNotFoundException e) {
-                return ServerMessages.NODE_NOT_FOUND;
+                return NODE_NOT_FOUND;
             } catch (IndexOutOfBoundsException e) {
-                return ServerMessages.UNSUPPORTED;
+                return UNSUPPORTED;
             }
-            return ServerMessages.EDGE_REMOVED;
+            return EDGE_REMOVED;
         }
-        return ServerMessages.UNSUPPORTED;
+        if (message.startsWith(SHORTEST_PATH)) {
+            try {
+                String[] path = message.substring(SHORTEST_PATH.length()).split(" ");
+                return format(ServerMessages.PATH_WEIGHT, graphHolder.shortestPath(path[0], path[1]));
+            } catch (VertexNotFoundException e) {
+                return NODE_NOT_FOUND;
+            } catch (IndexOutOfBoundsException e) {
+                return UNSUPPORTED;
+            }
+        }
+        return UNSUPPORTED;
     }
 }
